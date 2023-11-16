@@ -53,8 +53,7 @@ $training_plans = $run->fetch_all(MYSQLI_ASSOC);
                         <?php
                          $sql = "SELECT members.* ,
                                 training_plans.name AS training_plan_name,
-                                trainers.first_name AS trainer_first_name,
-                                trainers.last_name AS trainer_last_name
+                                CONCAT(trainers.first_name, ' ', trainers.last_name) AS trainers_full_name
                                 FROM `members` 
                                 LEFT JOIN `training_plans` ON members.training_plan_id = training_plans.plan_id
                                 LEFT JOIN `trainers` ON trainers.trainer_id = members.trainer_id";
@@ -66,7 +65,7 @@ $training_plans = $run->fetch_all(MYSQLI_ASSOC);
                                 <td><?= $result['last_name']?></td>
                                 <td><?= $result['email']?></td>
                                 <td><?= $result['phone_number']?></td>
-                                <td><?= $result['trainer_id']?></td>
+                                <td><?= $result['trainers_full_name'];?></td>
                                 <td><img style="width: 60px; height: 60px; object-fit: cover;" src="<?= $result['photo_path']?>" alt="Member Photo"></td>
                                 <td><?= $result['training_plan_name']?></td>
                                 <td><a href="<?= $result['access_card_pdf_path']?>" target="_blank">Access Card</a></td>
@@ -75,7 +74,12 @@ $training_plans = $run->fetch_all(MYSQLI_ASSOC);
                                     $new_date = date("F, jS Y", $created_at);
                                     echo $new_date;
                                     ?></td>
-                                <td><button>Delete</button></td>
+                                <td>
+                                    <form action="delete_member.php" method="POST">
+                                        <input type="hidden" name="member_id" value="<?= $result['member_id'];?>">
+                                        <button type="submit">Delete</button>
+                                    </form>
+                                </td>
                             </tr>
                         <?php
                         endforeach;
@@ -87,6 +91,7 @@ $training_plans = $run->fetch_all(MYSQLI_ASSOC);
         <div class="row mb-5">
             <div class="col-md-6">
                 <h2>Register Member</h2>
+                <a href="export.php?what=members" class="btn btn-primary">Export members</a>
                 <form action="register_member.php" method="post" enctype="multipart/form-data">
                     First Name: <input type="text" class="form-control" name="first_name"><br>
                     Last Name: <input type="text" class="form-control" name="last_name"><br>
@@ -108,10 +113,52 @@ $training_plans = $run->fetch_all(MYSQLI_ASSOC);
             </div>
 
 
-            <div class="col-md-6"></div>
+            <div class="col-md-6">
+                <h2>Register Trainer</h2>
+                <a href="export.php?what=trainers" class="btn btn-primary">Export trainer</a>
+                <form action="register_trainer.php" method="post" enctype="multipart/form-data">
+                    First Name: <input type="text" class="form-control" name="first_name"><br>
+                    Last Name: <input type="text" class="form-control" name="last_name"><br>
+                    Email: <input type="email" class="form-control" name="email"><br>
+                    Phone Number: <input type="text" class="form-control" name="phone_number"><br>
+                    <input type="submit" value="Register Trainer" class="btn btn-primary mt-3">
+                </form>
+            </div>
 
 
 
+        </div>
+        <div class="row mb-5">
+            <div class="col-md-6">
+                <h2>Assing Trainer To Member</h2>
+                <form action="assing.php" method="POST">
+                Member: <select name="select_member" id="select_member">
+                        <option value="#" selected disabled>Select Member</option>
+                    <?php
+                    $sql = "SELECT member_id, CONCAT(first_name, ' ', last_name) AS member_full_name FROM members";
+                    $members = $conn->query($sql);
+                    foreach ($members as $idx => $member): ?>
+                        <option value="<?=$member['member_id']?>"><?= $member['member_full_name']?></option>
+<!--                        <input type="hidden" name="member_id" value="--><?//= $member['member_id']?><!--">-->
+                    <?php endforeach;
+                    ?>
+                </select>
+                <br><br>
+                Trainer: <select name="select_trainer" id="select_trainer">
+                        <option value="#" selected disabled>Select Trainer</option>
+                    <?php
+                    $sql = "SELECT trainer_id, CONCAT(first_name, ' ', last_name) AS trainer_full_name FROM trainers";
+                    $trainers = $conn->query($sql);
+                    foreach ($trainers as $idx => $trainer): ?>
+                        <option value="<?=$trainer['trainer_id']?>"><?=$trainer['trainer_full_name']?></option>
+<!--                        <input type="hidden" name="trainer_id" value="--><?//=$trainer['trainer_id']?><!--">-->
+                    <?php endforeach; ?>
+                    </select>
+                    <div class="mt-5">
+                        <input type="submit" value="Assing" class="btn btn-primary">
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
